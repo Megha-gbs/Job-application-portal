@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard — Job Applications</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #a5b4fc;
+            --secondary: #0ea5e9;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --purple: #a855f7;
+            --bg: #0a0a14;
+            --surface: #111120;
+            --surface2: #16172a;
+            --surface3: #1c1d35;
+            --border: rgba(99,102,241,0.15);
+            --border2: rgba(255,255,255,0.06);
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-subtle: #64748b;
+            --radius: 14px;
+            --radius-sm: 9px;
+            --shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background:
+                radial-gradient(ellipse 70% 50% at 5% 0%, rgba(99,102,241,0.12) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 40% at 95% 100%, rgba(168,85,247,0.08) 0%, transparent 50%);
+            pointer-events: none; z-index: 0;
+        }
+
+        /* Layout */
+        .layout { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background: var(--surface);
+            border-right: 1px solid var(--border2);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0; left: 0;
+            height: 100vh;
+            z-index: 50;
+            padding: 0 0 24px;
+        }
+        .sidebar-brand {
+            padding: 22px 20px;
+            border-bottom: 1px solid var(--border2);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .brand-icon {
+            width: 34px; height: 34px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.95rem;
+            box-shadow: 0 0 15px rgba(99,102,241,0.4);
+            flex-shrink: 0;
+        }
+        .sidebar-brand span {
+            font-size: 1rem; font-weight: 700;
+            background: linear-gradient(135deg, #e2e8f0, var(--primary-light));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .sidebar-nav { padding: 16px 12px; flex: 1; }
+        .nav-label {
+            font-size: 0.68rem; font-weight: 700;
+            color: var(--text-subtle); letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0 8px; margin-bottom: 8px; margin-top: 16px;
+        }
+        .nav-label:first-child { margin-top: 0; }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 12px;
+            border-radius: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.875rem; font-weight: 500;
+            transition: all 0.2s;
+            text-decoration: none;
+            margin-bottom: 2px;
+        }
+        .nav-item:hover { background: var(--surface2); color: var(--text); }
+        .nav-item.active {
+            background: rgba(99,102,241,0.15);
+            color: var(--primary-light);
+            border: 1px solid rgba(99,102,241,0.2);
+        }
+        .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+        .sidebar-footer {
+            padding: 0 12px;
+            border-top: 1px solid var(--border2);
+            padding-top: 16px;
+        }
+
+        /* Main content */
+        .main {
+            margin-left: 240px;
+            flex: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top bar */
+        .topbar {
+            height: 64px;
+            background: rgba(10,10,20,0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+            position: sticky; top: 0; z-index: 40;
+        }
+        .topbar-left h2 {
+            font-size: 1.1rem; font-weight: 700; color: var(--text);
+        }
+        .topbar-left p { font-size: 0.78rem; color: var(--text-subtle); }
+        .topbar-right { display: flex; align-items: center; gap: 10px; }
+        .icon-btn {
+            width: 36px; height: 36px;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 0.9rem; color: var(--text-muted);
+            transition: all 0.2s; text-decoration: none;
+        }
+        .icon-btn:hover { background: var(--surface3); color: var(--text); border-color: var(--border); }
+        .refresh-btn {
+            display: flex; align-items: center; gap: 7px;
+            padding: 8px 16px;
+            background: rgba(99,102,241,0.12);
+            border: 1px solid rgba(99,102,241,0.3);
+            border-radius: 8px;
+            color: var(--primary-light);
+            font-size: 0.83rem; font-weight: 600; font-family: 'Inter', sans-serif;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .refresh-btn:hover { background: rgba(99,102,241,0.22); color: white; }
+
+        /* Page content */
+        .page-content { padding: 28px; flex: 1; }
+
+        /* Stats grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: var(--radius);
+            padding: 20px 22px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); border-color: var(--border); }
+        .stat-card::before {
+            content: ''; position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+        .stat-card.c1::before { background: linear-gradient(90deg, var(--primary), var(--secondary)); }
+        .stat-card.c2::before { background: linear-gradient(90deg, var(--warning), #fb923c); }
+        .stat-card.c3::before { background: linear-gradient(90deg, var(--success), #34d399); }
+        .stat-card.c4::before { background: linear-gradient(90deg, var(--error), #fb7185); }
+        .stat-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .stat-icon {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+        }
+        .c1 .stat-icon { background: rgba(99,102,241,0.15); }
+        .c2 .stat-icon { background: rgba(245,158,11,0.15); }
+        .c3 .stat-icon { background: rgba(16,185,129,0.15); }
+        .c4 .stat-icon { background: rgba(239,68,68,0.15); }
+        .stat-trend {
+            font-size: 0.72rem; font-weight: 600;
+            padding: 3px 8px; border-radius: 100px;
+        }
+        .trend-up { background: rgba(16,185,129,0.1); color: #6ee7b7; }
+        .stat-num {
+            font-size: 2.2rem; font-weight: 800; color: var(--text); line-height: 1;
+            margin-bottom: 4px;
+        }
+        .stat-label { font-size: 0.78rem; color: var(--text-muted); font-weight: 500; }
+
+        /* Controls row */
+        .controls-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .search-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 220px;
+        }
+        .search-wrap .s-icon {
+            position: absolute; left: 13px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-subtle); font-size: 0.9rem;
+            pointer-events: none;
+        }
+        .search-box {
+            width: 100%;
+            padding: 10px 14px 10px 38px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 0.875rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s; outline: none;
+        }
+        .search-box::placeholder { color: var(--text-subtle); }
+        .search-box:focus { border-color: var(--border); background: var(--surface2); }
+        .filter-select {
+            padding: 10px 36px 10px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-family: 'Inter', sans-serif;
+            outline: none; cursor: pointer;
+            transition: all 0.2s;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+        .filter-select:focus { border-color: var(--border); }
+        .filter-select option { background: #16172a; }
+
+        /* Table card */
+        .table-card {
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .table-header {
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--border2);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .table-header h3 { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+        .table-count {
+            font-size: 0.78rem; color: var(--text-subtle);
+            background: var(--surface2);
+            padding: 3px 10px; border-radius: 100px;
+        }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        thead tr {
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid var(--border2);
+        }
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--text-subtle);
+            white-space: nowrap;
+        }
+        td {
+            padding: 14px 16px;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border2);
+            vertical-align: middle;
+        }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr { transition: background 0.15s; }
+        tbody tr:hover { background: rgba(99,102,241,0.04); }
+        .applicant-info { display: flex; align-items: center; gap: 12px; }
+        .applicant-avatar {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-dark), var(--purple));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; font-weight: 700; color: white;
+            flex-shrink: 0;
+        }
+        .applicant-name { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+        .applicant-email { font-size: 0.775rem; color: var(--text-subtle); }
+        .position-badge {
+            display: inline-flex; align-items: center;
+            background: rgba(14,165,233,0.08);
+            border: 1px solid rgba(14,165,233,0.18);
+            color: #7dd3fc;
+            padding: 3px 10px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        /* Status badges */
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 11px;
+            border-radius: 100px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            white-space: nowrap;
+        }
+        .status-badge::before {
+            content: ''; width: 5px; height: 5px;
+            border-radius: 50%; background: currentColor;
+        }
+        .status-new { background: rgba(100,116,139,0.12); color: #94a3b8; border: 1px solid rgba(100,116,139,0.2); }
+        .status-reviewing { background: rgba(245,158,11,0.1); color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
+        .status-shortlisted { background: rgba(16,185,129,0.1); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .status-rejected { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+
+        /* Action buttons */
+        .action-btns { display: flex; gap: 6px; align-items: center; }
+        .act-btn {
+            width: 30px; height: 30px;
+            border-radius: 7px;
+            border: 1px solid var(--border2);
+            background: var(--surface2);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 0.85rem;
+            transition: all 0.2s; color: var(--text-muted);
+        }
+        .act-btn:hover { transform: translateY(-1px); border-color: var(--border); }
+        .act-btn.view:hover { background: rgba(14,165,233,0.15); color: #7dd3fc; border-color: rgba(14,165,233,0.3); }
+        .act-btn.edit:hover { background: rgba(245,158,11,0.15); color: #fbbf24; border-color: rgba(245,158,11,0.3); }
+        .act-btn.del:hover { background: rgba(239,68,68,0.15); color: #f87171; border-color: rgba(239,68,68,0.3); }
+        .act-btn.resume:hover { background: rgba(16,185,129,0.15); color: #34d399; border-color: rgba(16,185,129,0.3); }
+
+        /* Empty / loading states */
+        .state-row td {
+            padding: 60px 20px;
+            text-align: center;
+            color: var(--text-subtle);
+        }
+        .state-icon { font-size: 2.5rem; margin-bottom: 12px; }
+        .state-title { font-size: 1rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+        .state-sub { font-size: 0.85rem; }
+        .spinner {
+            width: 28px; height: 28px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            z-index: 200;
+            align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 18px;
+            width: 100%;
+            max-width: 580px;
+            max-height: 88vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: var(--shadow);
+            animation: modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes modalIn {
+            from { transform: scale(0.9) translateY(20px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .modal-head {
+            padding: 22px 24px;
+            border-bottom: 1px solid var(--border2);
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0;
+            background: var(--surface);
+            z-index: 1;
+        }
+        .modal-head h2 { font-size: 1rem; font-weight: 700; }
+        .modal-close {
+            width: 30px; height: 30px;
+            border-radius: 7px;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 0.85rem; color: var(--text-muted);
+            transition: all 0.2s;
+        }
+        .modal-close:hover { background: var(--surface3); color: var(--text); }
+        .modal-body { padding: 22px 24px; }
+
+        /* View modal fields */
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .detail-item label {
+            display: block; font-size: 0.72rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.07em;
+            color: var(--text-subtle); margin-bottom: 4px;
+        }
+        .detail-item .val {
+            font-size: 0.875rem; color: var(--text);
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 7px;
+            padding: 9px 12px;
+            min-height: 38px; word-break: break-all;
+        }
+        .detail-item .val a { color: var(--primary-light); text-decoration: none; }
+        .detail-item .val a:hover { text-decoration: underline; }
+        .detail-item.full { grid-column: 1 / -1; }
+        .detail-section-title {
+            grid-column: 1 / -1;
+            font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.1em;
+            color: var(--primary-light);
+            padding: 10px 0 4px;
+            border-top: 1px solid var(--border2);
+            margin-top: 4px;
+        }
+
+        /* Edit form */
+        .edit-field { margin-bottom: 16px; }
+        .edit-field label {
+            display: block; font-size: 0.78rem; font-weight: 600;
+            color: var(--text-muted); margin-bottom: 6px;
+        }
+        .edit-field input,
+        .edit-field select,
+        .edit-field textarea {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--surface2);
+            border: 1.5px solid var(--border2);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 0.875rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s; outline: none;
+            appearance: none;
+        }
+        .edit-field input:focus,
+        .edit-field select:focus,
+        .edit-field textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+        }
+        .edit-field select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 12px center;
+            padding-right: 36px;
+        }
+        .edit-field select option { background: #16172a; }
+        .edit-field textarea { min-height: 90px; resize: vertical; line-height: 1.6; }
+        .edit-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .modal-actions {
+            display: flex; gap: 10px; margin-top: 20px;
+            padding-top: 18px; border-top: 1px solid var(--border2);
+        }
+        .btn-save {
+            flex: 1; padding: 11px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white; border: none; border-radius: var(--radius-sm);
+            font-size: 0.9rem; font-weight: 700; font-family: 'Inter', sans-serif;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-save:hover { box-shadow: 0 5px 20px rgba(99,102,241,0.35); transform: translateY(-1px); }
+        .btn-cancel {
+            padding: 11px 22px;
+            background: var(--surface2); border: 1px solid var(--border2);
+            color: var(--text-muted); border-radius: var(--radius-sm);
+            font-size: 0.9rem; font-weight: 600; font-family: 'Inter', sans-serif;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-cancel:hover { background: var(--surface3); color: var(--text); }
+
+        /* Toast */
+        .toast {
+            position: fixed; top: 20px; right: 24px;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-weight: 600; font-size: 0.875rem;
+            z-index: 9999; display: none;
+            animation: toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+            backdrop-filter: blur(10px);
+            align-items: center; gap: 8px;
+        }
+        .toast.show { display: flex; }
+        .toast.success { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35); color: #6ee7b7; }
+        .toast.error { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.35); color: #fca5a5; }
+        @keyframes toastIn {
+            from { transform: translateX(110%) scale(0.8); opacity: 0; }
+            to { transform: translateX(0) scale(1); opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; }
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+            .detail-grid { grid-template-columns: 1fr; }
+            .edit-row { grid-template-columns: 1fr; }
+            .page-content { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+<div class="layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">🚀</div>
+            <span>TalentReach</span>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-label">Dashboard</div>
+            <div class="nav-item active">
+                <span class="nav-icon">📊</span> Overview
+            </div>
+            <div class="nav-label">Applications</div>
+            <div class="nav-item active" style="background:rgba(99,102,241,0.12);color:var(--primary-light)">
+                <span class="nav-icon">📋</span> All Applications
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <a class="nav-item" href="index.html" style="color:var(--text-muted)">
+                <span class="nav-icon">←</span> Back to Portal
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="main">
+
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <h2>Applications Dashboard</h2>
+                <p id="lastRefreshed">Loading...</p>
+            </div>
+            <div class="topbar-right">
+                <a class="icon-btn" href="index.html" title="Go to portal">🏠</a>
+                <button class="refresh-btn" onclick="loadApplications()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                    Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Page content -->
+        <div class="page-content">
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card c1">
+                    <div class="stat-top">
+                        <div class="stat-icon">📥</div>
+                        <span class="stat-trend trend-up">Total</span>
+                    </div>
+                    <div class="stat-num" id="totalCount">—</div>
+                    <div class="stat-label">Total Applications</div>
+                </div>
+                <div class="stat-card c2">
+                    <div class="stat-top">
+                        <div class="stat-icon">🆕</div>
+                        <span class="stat-trend trend-up">New</span>
+                    </div>
+                    <div class="stat-num" id="newCount">—</div>
+                    <div class="stat-label">Awaiting Review</div>
+                </div>
+                <div class="stat-card c3">
+                    <div class="stat-top">
+                        <div class="stat-icon">⭐</div>
+                        <span class="stat-trend trend-up">Good</span>
+                    </div>
+                    <div class="stat-num" id="shortlistedCount">—</div>
+                    <div class="stat-label">Shortlisted</div>
+                </div>
+                <div class="stat-card c4">
+                    <div class="stat-top">
+                        <div class="stat-icon">🔍</div>
+                        <span class="stat-trend trend-up">Active</span>
+                    </div>
+                    <div class="stat-num" id="reviewingCount">—</div>
+                    <div class="stat-label">Under Review</div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls-row">
+                <div class="search-wrap">
+                    <span class="s-icon">🔍</span>
+                    <input type="text" class="search-box" id="searchBox" placeholder="Search by name, email or position...">
+                </div>
+                <select class="filter-select" id="statusFilter">
+                    <option value="">All Statuses</option>
+                    <option value="New">New</option>
+                    <option value="Reviewing">Reviewing</option>
+                    <option value="Shortlisted">Shortlisted</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
+            </div>
+
+            <!-- Table -->
+            <div class="table-card">
+                <div class="table-header">
+                    <h3>Applicants</h3>
+                    <span class="table-count" id="tableCount">0 results</span>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Applicant</th>
+                                <th>Position</th>
+                                <th>Experience</th>
+                                <th>Status</th>
+                                <th>Applied</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="applicationsTable">
+                            <tr class="state-row">
+                                <td colspan="6">
+                                    <div class="spinner"></div>
+                                    <div class="state-title">Loading applications…</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div><!-- /page-content -->
+    </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- View Modal -->
+<div class="modal-overlay" id="viewModal">
+    <div class="modal">
+        <div class="modal-head">
+            <h2>📋 Application Details</h2>
+            <button class="modal-close" onclick="closeModal('viewModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-grid" id="viewContent"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <div class="modal-head">
+            <h2>✏️ Edit Application</h2>
+            <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="edit-row">
+                    <div class="edit-field">
+                        <label>First Name</label>
+                        <input type="text" id="editFirstName" required>
+                    </div>
+                    <div class="edit-field">
+                        <label>Last Name</label>
+                        <input type="text" id="editLastName" required>
+                    </div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-field">
+                        <label>Email</label>
+                        <input type="email" id="editEmail" required>
+                    </div>
+                    <div class="edit-field">
+                        <label>Phone</label>
+                        <input type="tel" id="editPhone">
+                    </div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-field">
+                        <label>Position</label>
+                        <input type="text" id="editPosition">
+                    </div>
+                    <div class="edit-field">
+                        <label>Experience</label>
+                        <input type="text" id="editExperience">
+                    </div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-field">
+                        <label>Skills</label>
+                        <input type="text" id="editSkills">
+                    </div>
+                    <div class="edit-field">
+                        <label>Education</label>
+                        <input type="text" id="editEducation">
+                    </div>
+                </div>
+                <div class="edit-field">
+                    <label>Status</label>
+                    <select id="editStatus">
+                        <option value="New">🆕 New</option>
+                        <option value="Reviewing">🔍 Reviewing</option>
+                        <option value="Shortlisted">⭐ Shortlisted</option>
+                        <option value="Rejected">❌ Rejected</option>
+                    </select>
+                </div>
+                <div class="edit-field">
+                    <label>Admin Notes</label>
+                    <textarea id="editNotes" placeholder="Internal notes about this applicant..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal('editModal')">Cancel</button>
+                    <button type="submit" class="btn-save">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+    const API_BASE_URL = 'https://17jm4ooja0.execute-api.ap-south-1.amazonaws.com/prod';
+    let allApplications = [];
+
+    document.addEventListener('DOMContentLoaded', loadApplications);
+
+    // Search + filter
+    document.getElementById('searchBox').addEventListener('input', filterAndRender);
+    document.getElementById('statusFilter').addEventListener('change', filterAndRender);
+
+    function filterAndRender() {
+        const q = document.getElementById('searchBox').value.toLowerCase();
+        const s = document.getElementById('statusFilter').value;
+        const filtered = allApplications.filter(app => {
+            const matchQ = !q ||
+                (app.firstName + ' ' + app.lastName).toLowerCase().includes(q) ||
+                app.email.toLowerCase().includes(q) ||
+                (app.position || '').toLowerCase().includes(q);
+            const matchS = !s || (app.status || 'New') === s;
+            return matchQ && matchS;
+        });
+        renderTable(filtered);
+    }
+
+    async function loadApplications() {
+        const tbody = document.getElementById('applicationsTable');
+        tbody.innerHTML = '<tr class="state-row"><td colspan="6"><div class="spinner"></div><div class="state-title">Loading applications…</div></td></tr>';
+        try {
+            const res = await fetch(API_BASE_URL + '/applications');
+            const data = await res.json();
+            allApplications = data.applications || [];
+            // Normalise: ensure every item has applicationId (camelCase) for consistent lookups
+            allApplications.forEach(app => {
+                if (!app.applicationId && app.applicationid) app.applicationId = app.applicationid;
+            });
+            filterAndRender();
+            updateStats();
+            document.getElementById('lastRefreshed').textContent =
+                'Last updated: ' + new Date().toLocaleTimeString();
+        } catch (err) {
+            console.error(err);
+            tbody.innerHTML = '<tr class="state-row"><td colspan="6"><div class="state-icon">⚠️</div><div class="state-title">Failed to load</div><div class="state-sub">Check API configuration and try again.</div></td></tr>';
+        }
+    }
+
+    function renderTable(apps) {
+        const tbody = document.getElementById('applicationsTable');
+        document.getElementById('tableCount').textContent = apps.length + ' result' + (apps.length !== 1 ? 's' : '');
+        if (apps.length === 0) {
+            tbody.innerHTML = '<tr class="state-row"><td colspan="6"><div class="state-icon">📭</div><div class="state-title">No applications found</div><div class="state-sub">Try adjusting your search or filters.</div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = apps.map(app => {
+            const initials = (app.firstName || '?')[0].toUpperCase() + (app.lastName || '?')[0].toUpperCase();
+            const status = app.status || 'New';
+            const statusClass = 'status-' + status.toLowerCase();
+            const date = app.appliedAt ? new Date(app.appliedAt).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) : '—';
+            // Handle both camelCase (applicationId) and lowercase (applicationid) from DynamoDB
+            const id = app.applicationId || app.applicationid;
+            return `<tr>
+                <td>
+                    <div class="applicant-info">
+                        <div class="applicant-avatar">${initials}</div>
+                        <div>
+                            <div class="applicant-name">${esc(app.firstName)} ${esc(app.lastName)}</div>
+                            <div class="applicant-email">${esc(app.email)}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="position-badge">${esc(app.position || '—')}</span></td>
+                <td>${esc(app.experience || '—')}</td>
+                <td><span class="status-badge ${statusClass}">${esc(status)}</span></td>
+                <td>${date}</td>
+                <td>
+                    <div class="action-btns">
+                        <button class="act-btn view" onclick="viewApplication('${id}')" title="View">👁</button>
+                        <button class="act-btn edit" onclick="editApplication('${id}')" title="Edit">✏️</button>
+                        <button class="act-btn del" onclick="deleteApplication('${id}')" title="Delete">🗑</button>
+                        ${app.resumeUrl ? `<button class="act-btn resume" onclick="window.open('${esc(app.resumeUrl)}')" title="Download resume">📄</button>` : ''}
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    function updateStats() {
+        document.getElementById('totalCount').textContent = allApplications.length;
+        document.getElementById('newCount').textContent = allApplications.filter(a => !a.status || a.status === 'New').length;
+        document.getElementById('shortlistedCount').textContent = allApplications.filter(a => a.status === 'Shortlisted').length;
+        document.getElementById('reviewingCount').textContent = allApplications.filter(a => a.status === 'Reviewing').length;
+    }
+
+    function viewApplication(id) {
+        const app = allApplications.find(a => (a.applicationId || a.applicationid) === id);
+        if (!app) return;
+        const status = app.status || 'New';
+        document.getElementById('viewContent').innerHTML = `
+            <div class="detail-section-title">Personal</div>
+            <div class="detail-item"><label>First Name</label><div class="val">${esc(app.firstName||'—')}</div></div>
+            <div class="detail-item"><label>Last Name</label><div class="val">${esc(app.lastName||'—')}</div></div>
+            <div class="detail-item"><label>Email</label><div class="val">${esc(app.email||'—')}</div></div>
+            <div class="detail-item"><label>Phone</label><div class="val">${esc(app.phone||'—')}</div></div>
+            <div class="detail-item"><label>Date of Birth</label><div class="val">${esc(app.dob||'—')}</div></div>
+            <div class="detail-item full"><label>Address</label><div class="val">${esc(app.address||'—')}</div></div>
+            <div class="detail-section-title">Professional</div>
+            <div class="detail-item"><label>Position</label><div class="val">${esc(app.position||'—')}</div></div>
+            <div class="detail-item"><label>Experience</label><div class="val">${esc(app.experience||'—')}</div></div>
+            <div class="detail-item full"><label>Skills</label><div class="val">${esc(app.skills||'—')}</div></div>
+            <div class="detail-item"><label>Education</label><div class="val">${esc(app.education||'—')}</div></div>
+            <div class="detail-item"><label>Status</label><div class="val"><span class="status-badge status-${status.toLowerCase()}">${esc(status)}</span></div></div>
+            <div class="detail-item"><label>LinkedIn</label><div class="val">${app.linkedin ? `<a href="${esc(app.linkedin)}" target="_blank">View Profile</a>` : '—'}</div></div>
+            <div class="detail-item"><label>Portfolio</label><div class="val">${app.portfolio ? `<a href="${esc(app.portfolio)}" target="_blank">View Portfolio</a>` : '—'}</div></div>
+            ${app.coverLetter ? `<div class="detail-item full"><label>Cover Letter</label><div class="val" style="white-space:pre-wrap;line-height:1.6">${esc(app.coverLetter)}</div></div>` : ''}
+            <div class="detail-item"><label>Applied On</label><div class="val">${app.appliedAt ? new Date(app.appliedAt).toLocaleString() : '—'}</div></div>
+            ${app.resumeUrl ? `<div class="detail-item"><label>Resume</label><div class="val"><a href="${esc(app.resumeUrl)}" target="_blank">📄 Download</a></div></div>` : ''}
+        `;
+        document.getElementById('viewModal').classList.add('active');
+    }
+
+    function editApplication(id) {
+        const app = allApplications.find(a => (a.applicationId || a.applicationid) === id);
+        if (!app) return;
+        document.getElementById('editId').value = app.applicationId || app.applicationid;
+        document.getElementById('editFirstName').value = app.firstName || '';
+        document.getElementById('editLastName').value = app.lastName || '';
+        document.getElementById('editEmail').value = app.email || '';
+        document.getElementById('editPhone').value = app.phone || '';
+        document.getElementById('editPosition').value = app.position || '';
+        document.getElementById('editExperience').value = app.experience || '';
+        document.getElementById('editSkills').value = app.skills || '';
+        document.getElementById('editEducation').value = app.education || '';
+        document.getElementById('editStatus').value = app.status || 'New';
+        document.getElementById('editNotes').value = app.notes || '';
+        document.getElementById('editModal').classList.add('active');
+    }
+
+    document.getElementById('editForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const payload = {
+            firstName: document.getElementById('editFirstName').value,
+            lastName: document.getElementById('editLastName').value,
+            email: document.getElementById('editEmail').value,
+            phone: document.getElementById('editPhone').value,
+            position: document.getElementById('editPosition').value,
+            experience: document.getElementById('editExperience').value,
+            skills: document.getElementById('editSkills').value,
+            education: document.getElementById('editEducation').value,
+            status: document.getElementById('editStatus').value,
+            notes: document.getElementById('editNotes').value
+        };
+        try {
+            const res = await fetch(API_BASE_URL + '/applications/' + id, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                showToast('✓ Application updated.', 'success');
+                closeModal('editModal');
+                loadApplications();
+            } else {
+                showToast('Failed to update. Try again.', 'error');
+            }
+        } catch (err) {
+            showToast('Network error.', 'error');
+        }
+    });
+
+    async function deleteApplication(id) {
+        if (!id) { showToast('Cannot delete: missing application ID.', 'error'); return; }
+        if (!confirm('Delete this application? This cannot be undone.')) return;
+        try {
+            const res = await fetch(API_BASE_URL + '/applications/' + id, { method: 'DELETE' });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok) {
+                showToast('Application deleted.', 'success');
+                loadApplications();
+            } else {
+                console.error('Delete failed:', res.status, data);
+                showToast('Delete failed: ' + (data.message || res.status), 'error');
+            }
+        } catch (err) {
+            console.error('Delete network error:', err);
+            showToast('Network error while deleting.', 'error');
+        }
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    document.querySelectorAll('.modal-overlay').forEach(o => {
+        o.addEventListener('click', e => { if (e.target === o) o.classList.remove('active'); });
+    });
+
+    function esc(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function showToast(msg, type) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast ' + type + ' show';
+        setTimeout(() => { t.className = 'toast'; }, 4000);
+    }
+</script>
+</body>
+</html>
